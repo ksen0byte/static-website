@@ -17,15 +17,19 @@ jobs:
         run: sudo apt-get install jq
 
       - name: Fetch the current exchange rate and date
+        id: rate-fetch
         run: |
           RESPONSE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json")
           USD_RATE=$(echo $RESPONSE | jq -r '.[] | select(.cc == "USD") | .rate')
           EXCHANGE_DATE=$(echo $RESPONSE | jq -r '.[] | select(.cc == "USD") | .exchangedate')
           echo "{\"rate\": $USD_RATE, \"updated_at\": \"$EXCHANGE_DATE\"}" > rate.json
+          echo "USD_RATE=$USD_RATE" >> "$GITHUB_OUTPUT"
+          echo "EXCHANGE_DATE=$EXCHANGE_DATE" >> "$GITHUB_OUTPUT"
 
       - name: Commit and push if changes are detected
         env:
           PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          EXCHANGE_DATE: ${{ steps.rate-fetch.outputs.EXCHANGE_DATE }}
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
@@ -38,20 +42,21 @@ jobs:
           MEASUREMENT_ID: ${{ secrets.MEASUREMENT_ID }}
           API_SECRET: ${{ secrets.API_SECRET }}
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          USD_RATE: ${{ steps.rate-fetch.outputs.USD_RATE }}
+          EXCHANGE_DATE: ${{ steps.rate-fetch.outputs.EXCHANGE_DATE }}
         run: |
-          USD_RATE=$(cat rate.json | jq -r .rate)
           if [ ! -z "$USD_RATE" ]; then
-              curl -X POST \
-                  "https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}" \
-                  -H "Content-Type: application/json" \
-                  -d '{
-                      "client_id": "'${CLIENT_ID}'",
-                      "events": [{
-                          "name": "update_rate",
-                          "params": {"rate":'$USD_RATE'}
-                      }]
-                  }'
-              echo "Uploaded the USD rate [$USD_RATE] for date [$EXCHANGE_DATE]"
+            curl -X POST \
+              "https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "client_id": "'${CLIENT_ID}'",
+                "events": [{
+                  "name": "update_rate",
+                  "params": {"rate":'$USD_RATE'}
+                }]
+              }'
+            echo "Uploaded the USD rate [$USD_RATE] for date [$EXCHANGE_DATE]"
           else
-              echo "Failed to fetch the USD rate"
+            echo "Failed to fetch the USD rate"
           fi
