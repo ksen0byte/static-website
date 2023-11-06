@@ -8,6 +8,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         .rate { font-size: 2em; margin-top: 20px; }
+        .analytics-link { margin-top: 10px; }
     </style>
 </head>
 <!-- Google tag (gtag.js) -->
@@ -22,6 +23,9 @@
 <body>
     <h1>USD/UAH Exchange Rate Monitor</h1>
     <div class="rate" id="exchangeRate">Loading...</div>
+    <div class="analytics-link">
+        <a href="https://analytics.google.com/analytics/web/#/p414437146/reports/intelligenthome" target="_blank">View in Google Analytics</a>
+    </div>
     <script>
         // This script will be used to update the rate on page load if present
         document.addEventListener('DOMContentLoaded', (event) => {
