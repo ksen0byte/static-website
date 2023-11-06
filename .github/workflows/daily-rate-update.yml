@@ -16,14 +16,35 @@ jobs:
     - name: Set up dependencies
       run: sudo apt-get install jq # Installs jq if needed.
 
+    - name: Fetch the current exchange rate
+      run: |
+        EXHANGE_DATE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json" | jq -r '.[] | select(.cc == "USD") | .exchangedate')
+        USD_RATE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json" | jq -r '.[] | select(.cc == "USD") | .rate')
+        echo $EXHANGE_DATE | tee date.txt  # Store the rate in a text file temporarily.
+        echo $USD_RATE | tee rate.txt  # Store the rate in a text file temporarily.
+
+    - name: Update rate.json
+      run: |
+        USD_RATE=$(cat rate.txt)
+        DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        echo "{\"rate\": $USD_RATE, \"updated_at\": \"$DATE\"}" > rate.json
+
+    - name: Commit and push if changes are detected
+      run: |
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git add rate.json
+        git commit -m "Updated exchange rate on $DATE" -a || echo "No changes to commit"
+        git push origin main || echo "No changes to push"
+
     - name: Fetch and send exchange rate to GA4
       env:
         MEASUREMENT_ID: ${{ secrets.MEASUREMENT_ID }}
         API_SECRET: ${{ secrets.API_SECRET }}
         CLIENT_ID: ${{ secrets.CLIENT_ID }}
       run: |
-        EXHANGE_DATE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json" | jq -r '.[] | select(.cc == "USD") | .exchangedate')
-        USD_RATE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json" | jq -r '.[] | select(.cc == "USD") | .rate')
+        EXHANGE_DATE=$(cat date.txt)
+        USD_RATE=$(cat rate.txt)
 
         if [ ! -z "$USD_RATE" ]; then
             curl -X POST \
