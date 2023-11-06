@@ -1,0 +1,41 @@
+name: Daily Rate Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs at 00:00 UTC every day.
+
+jobs:
+  update_exchange_rate:
+    runs-on: ubuntu-latest # Specifies the runner environment.
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4 # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
+
+    - name: Set up dependencies
+      run: sudo apt-get install jq # Installs jq if needed.
+
+    - name: Fetch and send exchange rate to GA4
+      env:
+        MEASUREMENT_ID: ${{ secrets.MEASUREMENT_ID }}
+        API_SECRET: ${{ secrets.API_SECRET }}
+        CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      run: |
+        EXHANGE_DATE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json" | jq -r '.[] | select(.cc == "USD") | .exchangedate')
+        USD_RATE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json" | jq -r '.[] | select(.cc == "USD") | .rate')
+
+        if [ ! -z "$USD_RATE" ]; then
+            curl -X POST \
+                "https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}" \
+                -H "Content-Type: application/json" \
+                -d '{
+                    "client_id": "'${CLIENT_ID}'",
+                    "events": [{
+                        "name": "update_rate",
+                        "params": {"rate":'$USD_RATE'}
+                    }]
+                }'
+            echo "Uploaded the USD rate [$USD_RATE] for date [$EXHANGE_DATE]"
+        else
+            echo "Failed to fetch the USD rate"
+        fi
