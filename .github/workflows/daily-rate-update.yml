@@ -3,63 +3,55 @@ name: Daily Rate Update
 on:
   schedule:
     - cron: '0 0 * * *' # Runs at 00:00 UTC every day.
-  workflow_dispatch: # This line allows you to manually trigger the workflow.
+  workflow_dispatch:
 
 jobs:
   update_exchange_rate:
-    runs-on: ubuntu-latest # Specifies the runner environment.
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4 # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up dependencies
-      run: sudo apt-get install jq # Installs jq if needed.
+      - name: Set up dependencies
+        run: sudo apt-get install jq
 
-    - name: Fetch the current exchange rate
-      run: |
-        EXHANGE_DATE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json" | jq -r '.[] | select(.cc == "USD") | .exchangedate')
-        USD_RATE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json" | jq -r '.[] | select(.cc == "USD") | .rate')
-        echo $EXHANGE_DATE | tee date.txt  # Store the rate in a text file temporarily.
-        echo $USD_RATE | tee rate.txt  # Store the rate in a text file temporarily.
+      - name: Fetch the current exchange rate and date
+        run: |
+          RESPONSE=$(curl -s "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json")
+          USD_RATE=$(echo $RESPONSE | jq -r '.[] | select(.cc == "USD") | .rate')
+          EXCHANGE_DATE=$(echo $RESPONSE | jq -r '.[] | select(.cc == "USD") | .exchangedate')
+          echo "{\"rate\": $USD_RATE, \"updated_at\": \"$EXCHANGE_DATE\"}" > rate.json
 
-    - name: Update rate.json
-      run: |
-        USD_RATE=$(cat rate.txt)
-        DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        echo "{\"rate\": $USD_RATE, \"updated_at\": \"$DATE\"}" > rate.json
+      - name: Commit and push if changes are detected
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add rate.json
+          git commit -m "Updated exchange rate on $EXCHANGE_DATE" -a || echo "No changes to commit"
+          git push --set-upstream https://${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/ksen0byte/static-website.git main || echo "No changes to push"
 
-    - name: Commit and push if changes are detected
-      env:
-        PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      run: |
-        git config --global user.email "actions@github.com"
-        git config --global user.name "GitHub Actions"
-        git add rate.json
-        git commit -m "Updated exchange rate on $DATE" -a || echo "No changes to commit"
-        git push --set-upstream https://${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/ksen0byte/static-website.git main || echo "No changes to push"
-
-    - name: Fetch and send exchange rate to GA4
-      env:
-        MEASUREMENT_ID: ${{ secrets.MEASUREMENT_ID }}
-        API_SECRET: ${{ secrets.API_SECRET }}
-        CLIENT_ID: ${{ secrets.CLIENT_ID }}
-      run: |
-        EXHANGE_DATE=$(cat date.txt)
-        USD_RATE=$(cat rate.txt)
-
-        if [ ! -z "$USD_RATE" ]; then
-            curl -X POST \
-                "https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}" \
-                -H "Content-Type: application/json" \
-                -d '{
-                    "client_id": "'${CLIENT_ID}'",
-                    "events": [{
-                        "name": "update_rate",
-                        "params": {"rate":'$USD_RATE'}
-                    }]
-                }'
-            echo "Uploaded the USD rate [$USD_RATE] for date [$EXHANGE_DATE]"
-        else
-            echo "Failed to fetch the USD rate"
-        fi
+      - name: Fetch and send exchange rate to GA4
+        env:
+          MEASUREMENT_ID: ${{ secrets.MEASUREMENT_ID }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        run: |
+          USD_RATE=$(cat rate.json | jq -r .rate)
+          if [ ! -z "$USD_RATE" ]; then
+              curl -X POST \
+                  "https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}" \
+                  -H "Content-Type: application/json" \
+                  -d '{
+                      "client_id": "'${CLIENT_ID}'",
+                      "events": [{
+                          "name": "update_rate",
+                          "params": {"rate":'$USD_RATE'}
+                      }]
+                  }'
+              echo "Uploaded the USD rate [$USD_RATE] for date [$EXCHANGE_DATE]"
+          else
+              echo "Failed to fetch the USD rate"
+          fi
