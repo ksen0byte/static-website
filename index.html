@@ -2,48 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your GitHub Portfolio</title>
+    <title>USD/UAH Exchange Rate Monitor</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .header {
-            background-color: #333;
-            color: #fff;
-            padding: 10px 0;
-            text-align: center;
-        }
-        .nav {
-            background-color: #444;
-            color: white;
-            padding: 10px 0;
-            text-align: center;
-        }
-        .nav a {
-            color: white;
-            text-decoration: none;
-            margin: 0 10px;
-        }
-        .nav a:hover {
-            text-decoration: underline;
-        }
-        .content {
-            padding: 20px;
-        }
-        .footer {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 10px 0;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .rate { font-size: 2em; margin-top: 20px; }
     </style>
 </head>
 <!-- Google tag (gtag.js) -->
@@ -56,30 +20,15 @@
   gtag('config', 'G-2W3SCZ2VWM');
 </script>
 <body>
-    <header class="header">
-        <h1>Welcome to My GitHub Portfolio</h1>
-    </header>
-    <nav class="nav">
-        <a href="#home">Home</a>
-        <a href="#projects">Projects</a>
-        <a href="#about">About</a>
-        <a href="#contact">Contact</a>
-    </nav>
-    <section class="content">
-        <h2 id="home">Home</h2>
-        <p>This is a placeholder for the homepage content. Introduce yourself and mention your interest in coding and development.</p>
-        
-        <h2 id="projects">Projects</h2>
-        <p>Here you can showcase your GitHub projects with links to the repositories or live sites.</p>
-        
-        <h2 id="about">About</h2>
-        <p>Tell the world a bit about yourself, your skills, and what you're passionate about in technology.</p>
-        
-        <h2 id="contact">Contact</h2>
-        <p>Provide some contact information or a form for visitors to get in touch with you.</p>
-    </section>
-    <footer class="footer">
-        <p>Copyright © Your Name. All rights reserved.</p>
-    </footer>
+    <h1>USD/UAH Exchange Rate Monitor</h1>
+    <div class="rate" id="exchangeRate">Loading...</div>
+    <script>
+        // This script will be used to update the rate on page load if present
+        document.addEventListener('DOMContentLoaded', (event) => {
+            fetch('rate.json')
+                .then(response => response.json())
+                .then(data => document.getElementById('exchangeRate').textContent = `1 USD = ${data.rate} UAH`);
+        });
+    </script>
 </body>
 </html>
