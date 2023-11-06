@@ -8,6 +8,9 @@ on:
 jobs:
   update_exchange_rate:
     runs-on: ubuntu-latest
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the added or changed files to the repository.
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -35,7 +38,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git add rate.json
           git commit -m "Updated exchange rate on $EXCHANGE_DATE" -a || echo "No changes to commit"
-          git push --set-upstream https://${{ env.PERSONAL_ACCESS_TOKEN }}@github.com/ksen0byte/static-website.git main || echo "No changes to push"
+          git push origin main || echo "No changes to push"
 
       - name: Fetch and send exchange rate to GA4
         env:
