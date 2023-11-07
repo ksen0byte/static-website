@@ -28,14 +28,14 @@
         <a href="https://analytics.google.com/analytics/web/#/p414437146/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..startRow%3D0&r=top-events&ruid=top-events,life-cycle,engagement&collectionId=life-cycle" target="_blank">View <b>update_rate</b> in Google Analytics</a>
     </div>
     <script>
-        // This script will be used to update the rate on page load if present
+        // This script will update the rate and the last updated timestamp on page load
         document.addEventListener('DOMContentLoaded', (event) => {
             fetch('rate.json')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('exchangeRate').textContent = `1 USD = ${data.rate} UAH`);
+                    document.getElementById('exchangeRate').textContent = `1 USD = ${data.rate} UAH`;
                     document.getElementById('lastUpdated').textContent = `Last updated: ${data.updated_at}`;
-                }
+                });
         });
     </script>
 </body>
