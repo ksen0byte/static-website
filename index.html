@@ -6,9 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>USD/UAH Exchange Rate Monitor</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
+        body { font-family: Arial, sans-serif; text-align: center; transition: background-color 0.3s, color 0.3s; }
         .rate { font-size: 2em; margin-top: 20px; }
         .analytics-link, .last-updated { margin-top: 10px; }
+        .dark-mode { background-color: #121212; color: #ffffff; }
+        .light-mode { background-color: #ffffff; color: #000000; }
+        #darkModeToggle { position: fixed; top: 10px; right: 10px; padding: 5px; cursor: pointer; }
     </style>
 </head>
 <!-- Google tag (gtag.js) -->
@@ -20,14 +23,26 @@
 
   gtag('config', 'G-2W3SCZ2VWM');
 </script>
-<body>
+<body class="dark-mode">
     <h1>USD/UAH Exchange Rate Monitor</h1>
     <div class="rate" id="exchangeRate">Loading...</div>
     <div class="last-updated" id="lastUpdated">Last updated: Loading...</div>
     <div class="analytics-link">
         <a href="https://analytics.google.com/analytics/web/#/p414437146/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..startRow%3D0&r=top-events&ruid=top-events,life-cycle,engagement&collectionId=life-cycle" target="_blank">View <b>update_rate</b> in Google Analytics</a>
     </div>
+    <!-- Dark Mode Toggle -->
+    <button id="darkModeToggle">Toggle Dark/Light Mode</button>
     <script>
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+            var body = document.body;
+            body.classList.toggle('dark-mode');
+            body.classList.toggle('light-mode');
+        }
+
+        // Set up the event listener for the Dark Mode toggle button
+        document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+        
         // This script will update the rate and the last updated timestamp on page load
         document.addEventListener('DOMContentLoaded', (event) => {
             fetch('rate.json')
