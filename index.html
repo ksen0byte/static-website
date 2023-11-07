@@ -8,7 +8,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         .rate { font-size: 2em; margin-top: 20px; }
-        .analytics-link { margin-top: 10px; }
+        .analytics-link, .last-updated { margin-top: 10px; }
     </style>
 </head>
 <!-- Google tag (gtag.js) -->
@@ -23,6 +23,7 @@
 <body>
     <h1>USD/UAH Exchange Rate Monitor</h1>
     <div class="rate" id="exchangeRate">Loading...</div>
+    <div class="last-updated" id="lastUpdated">Last updated: Loading...</div>
     <div class="analytics-link">
         <a href="https://analytics.google.com/analytics/web/#/p414437146/reports/explorer?params=_u..nav%3Dmaui%26_r.explorerCard..startRow%3D0&r=top-events&ruid=top-events,life-cycle,engagement&collectionId=life-cycle" target="_blank">View <b>update_rate</b> in Google Analytics</a>
     </div>
@@ -31,7 +32,10 @@
         document.addEventListener('DOMContentLoaded', (event) => {
             fetch('rate.json')
                 .then(response => response.json())
-                .then(data => document.getElementById('exchangeRate').textContent = `1 USD = ${data.rate} UAH`);
+                .then(data => {
+                    document.getElementById('exchangeRate').textContent = `1 USD = ${data.rate} UAH`);
+                    document.getElementById('lastUpdated').textContent = `Last updated: ${data.updated_at}`;
+                }
         });
     </script>
 </body>
