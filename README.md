@@ -14,4 +14,4 @@ The `.github/workflows/daily-rate-update.yml` file contains the workflow definit
 
 To view the exchange rate data:
 1. Visit the [static website](https://ksen0byte.github.io/static-website/).
-2. Navigate to the [GA4](https://analytics.google.com/analytics/web/#/p414437146/reports/intelligenthome) property to monitor the `update_rate` event under the Realtime section.
+2. Navigate to the [GA4](https://analytics.google.com/analytics/web/#/p414437146/reports/intelligenthome) property to monitor the `update_rate` event under the Reports section.
